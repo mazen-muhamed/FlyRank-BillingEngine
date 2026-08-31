@@ -1,15 +1,37 @@
-# Phase 4 — Cost calculator
-# Rules (per DESIGN.md): cached input cheaper; reasoning = output pricing; categories NOT summed flat.
+"""Usage summary service: aggregate the month's usage into {used, limit, cost}."""
+from datetime import datetime
 
-API_CALL_CENT = 1      # 1000 calls = $0.01 → 1 cent each 
-INPUT_CENT_PER_1K = 3   # cached cheaper: 2 / fresh: 3 per 1k tokens
-CACHED_INPUT_CENT_PER_1K = 2
-OUTPUT_CENT_PER_1K = 8  # reasoning counted HERE (as output) — one line, can't miss it
+from sqlalchemy.ext.asyncio import AsyncSession
 
-def calc_cost(api_calls: int, input_tokens: int, cached: int, output_tokens: int, reasoning: int) -> int:
-    total = 0
-    total += api_calls * API_CALL_CENT
-    total += (input_tokens // 1000) * INPUT_CENT_PER_1K
-    total += (cached // 1000) * CACHED_INPUT_CENT_PER_1K
-    total += ((output_tokens + reasoning) // 1000) * OUTPUT_CENT_PER_1K
-    return total
+from app.billing import get_plan_limits
+from app.repositories import usage_repository as repo
+
+_PERIOD = lambda: datetime.utcnow().strftime("%Y-%m")
+
+
+async def get_tenant_usage_summary(db: AsyncSession, tenant_id) -> dict | None:
+    tenant = await repo.get_tenant_by_id(db, tenant_id)
+    if not tenant:
+        return None
+
+    plan_name = tenant.plan_status
+    limits = get_plan_limits(plan_name)
+    period = _PERIOD()
+
+    api_used, tokens_used = await repo.api_and_token_totals(db, tenant_id, period)
+
+    # Fall back to the monthly rollup when no raw events exist this period.
+    if api_used == 0 and tokens_used == 0:
+        rollup = await repo.get_rollup(db, tenant_id, period)
+        if rollup:
+            api_used, tokens_used = rollup.api_calls_used, rollup.tokens_used
+
+    return {
+        "tenant_id": str(tenant_id),
+        "api_calls_used": api_used,
+        "api_calls_limit": limits["api_calls_limit"],
+        "tokens_used": tokens_used,
+        "tokens_limit": limits["tokens_limit"],
+        "total_cost_cents": 0,
+        "plan_status": plan_name,
+    }
