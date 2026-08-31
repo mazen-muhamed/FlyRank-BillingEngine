@@ -19,12 +19,14 @@ async def get_tenant_usage_summary(db: AsyncSession, tenant_id) -> dict | None:
     period = _PERIOD()
 
     api_used, tokens_used = await repo.api_and_token_totals(db, tenant_id, period)
+    cost_cents = await repo.total_cost_cents_this_month(db, tenant_id, period)
 
     # Fall back to the monthly rollup when no raw events exist this period.
     if api_used == 0 and tokens_used == 0:
         rollup = await repo.get_rollup(db, tenant_id, period)
         if rollup:
             api_used, tokens_used = rollup.api_calls_used, rollup.tokens_used
+            cost_cents = rollup.total_cost_cents
 
     return {
         "tenant_id": str(tenant_id),
@@ -32,6 +34,6 @@ async def get_tenant_usage_summary(db: AsyncSession, tenant_id) -> dict | None:
         "api_calls_limit": limits["api_calls_limit"],
         "tokens_used": tokens_used,
         "tokens_limit": limits["tokens_limit"],
-        "total_cost_cents": 0,
+        "total_cost_cents": cost_cents,
         "plan_status": plan_name,
     }

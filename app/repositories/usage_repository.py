@@ -101,6 +101,17 @@ async def api_and_token_totals(db: AsyncSession, tenant_id: uuid.UUID, period: s
     return api.scalar_one() or 0, tok.scalar_one() or 0
 
 
+async def total_cost_cents_this_month(db: AsyncSession, tenant_id: uuid.UUID, period: str) -> int:
+    """Sum of usage_events.cost_cents for the tenant in the month. Integer cents only."""
+    result = await db.execute(
+        select(func.coalesce(func.sum(UsageEvent.cost_cents), 0)).where(
+            UsageEvent.tenant_id == tenant_id,
+            func.to_char(UsageEvent.recorded_at, "YYYY-MM") == period,
+        )
+    )
+    return result.scalar_one() or 0
+
+
 #  Monthly rollups 
 async def get_rollup(db: AsyncSession, tenant_id: uuid.UUID, period: str) -> MonthlyRollup | None:
     result = await db.execute(

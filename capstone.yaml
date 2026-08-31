@@ -1,0 +1,31 @@
+run: uvicorn app.main:app --reload
+seed: python -m app.seed
+migrate: python -m alembic upgrade head
+worker: celery -A app.workers.celery_app.celery_app worker --loglevel=info
+base_url: http://localhost:8000
+tests: pytest tests/
+
+stack:
+  python: "3.11+"
+  db: postgres (asyncpg)          # native install, Alembic migrations
+  queue: redis + celery           # webhook processing off the request path
+  stripe: test mode + stripe CLI  # free, no credit card
+
+endpoints:
+  - POST /api/v1/generate         # idempotency_key + event_type + quantity -> 201
+  - GET  /api/v1/usage/{tenant_id} # used / limit / cost_cents
+  - POST /api/v1/tenants          # create tenant (name, email)
+  - GET  /api/v1/plans            # list plans + quotas
+  - POST /api/v1/checkout         # Stripe Checkout (test mode) -> session_id/url
+  - POST /webhooks/stripe         # verify sig -> enqueue Celery -> 200
+  - GET  /api/v1/cost-breakdown   # pinned integer-cents pricing
+  - GET  /static/                 # admin console (also /)
+
+layers:
+  routers: app/routers/           # thin HTTP handlers only
+  services: app/services/         # meter_service, cost_service, stripe_service
+  workers: app/workers/           # celery_app + tasks (billing.process_stripe_event)
+  repositories: app/repositories/usage_repository.py
+  domain: app/billing.py          # integer-cents pricing + plan limits
+  models: app/models.py
+  schemas: app/schemas.py

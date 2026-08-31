@@ -3,277 +3,393 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FlyRank — Metering & Billing</title>
+<title>FlyRank — Metering &amp; Billing Console</title>
 <style>
   :root{
-    --paper:#f4f1ea;       
+    --paper:#f4f1ea;
     --paper2:#ece8de;
-    --ink:#20201e;        
-    --muted:#7a7568;     
-    --accent:#cd5c2b;    
+    --ink:#20201e;
+    --muted:#7a7568;
+    --accent:#cd5c2b;
     --accent-dark:#a84520;
     --card:#fbfaf6;
     --line:#e2dccd;
-    --serif:Georgia,'Times New Roman',serif;
+    --green:#4a9d62;
+    --amber:#c99a2e;
+    --red:#c25b4a;
+    --serif:'Iowan Old Style','Palatino','Georgia',serif;
     --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-    --radius:12px;
+    --mono:'SF Mono',ui-monospace,Menlo,monospace;
+    --radius:14px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.55;padding:48px 24px 80px;}
-  .wrap{max-width:980px;margin:0 auto}
+  body{background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(205,92,43,.06), transparent 60%),
+    var(--paper);
+    color:var(--ink);font-family:var(--sans);line-height:1.55;padding:44px 24px 90px;}
+  .wrap{max-width:1040px;margin:0 auto}
 
-  /* header */
-  header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:36px}
-  .brand{font-family:var(--serif);font-size:14px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+  /* ─ header ─ */
+  header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:30px}
+  .brand{font-family:var(--serif);font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
   .brand b{color:var(--ink);font-weight:600}
-  h1{font-family:var(--serif);font-weight:500;font-size:clamp(28px,5vw,42px);margin-top:6px}
-  .status{font-size:13px;color:var(--muted);text-align:right}
-  .status .dot{width:8px;height:8px;border-radius:50%;background:#9a9a90;display:inline-block;margin-right:6px}
-  .status.on .dot{background:#4a9d62}
+  h1{font-family:var(--serif);font-weight:500;font-size:clamp(26px,4.4vw,38px);margin-top:8px}
+  h1 .thin{font-weight:300;color:var(--muted)}
+  .status{font-size:12.5px;color:var(--muted);text-align:right;display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+  .pill{display:inline-flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:6px 12px;font-size:12.5px}
+  .pill .dot{width:8px;height:8px;border-radius:50%;background:#b9b5a9}
+  .pill.on .dot{background:var(--green);box-shadow:0 0 0 3px rgba(74,157,98,.15)}
+  .pill .code{font-family:var(--mono);color:var(--muted);font-size:11.5px}
 
-  section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px;margin-bottom:24px}
-  h2{font-family:var(--serif);font-weight:500;font-size:20px;margin-bottom:4px}
-  .sub{color:var(--muted);font-size:14px;margin-bottom:18px}
+  .grid{display:grid;gap:22px}
+  .grid.cols{grid-template-columns:1fr 1fr}
+  @media(max-width:860px){.grid.cols{grid-template-columns:1fr}}
 
-  .plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
-  .plan{border:1px solid var(--line);border-radius:10px;padding:20px}
-  .plan.pro{border-color:var(--accent)}
-  .plan .name{font-family:var(--serif);font-size:18px;font-weight:600}
-  .plan .price{font-size:24px;font-family:var(--serif);margin:6px 0 2px}
-  .plan .price small{font-size:13px;color:var(--muted)}
-  .plan ul{list-style:none;margin-top:12px;font-size:14px;color:var(--muted)}
-  .plan li{padding:4px 0;display:flex;justify-content:space-between}
+  section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px;box-shadow:0 1px 0 rgba(255,255,255,.6) inset}
+  h2{font-family:var(--serif);font-weight:500;font-size:19px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+  .sub{color:var(--muted);font-size:13.5px;margin-bottom:20px}
+  .tag{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--paper2);border-radius:5px;padding:2px 7px;font-weight:600}
+
+  /* ─ stat cards ─ */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+  @media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+  .stat .lbl{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+  .stat .val{font-size:26px;font-family:var(--serif);margin-top:6px;font-weight:500}
+  .stat .val small{font-size:13px;color:var(--muted);font-family:var(--sans)}
+  .stat .hint{font-size:11.5px;color:var(--green);margin-top:4px}
+
+  /* ─ plans ─ */
+  .plans{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:640px){.plans{grid-template-columns:1fr}}
+  .plan{border:1px solid var(--line);border-radius:12px;padding:22px;position:relative;display:flex;flex-direction:column}
+  .plan.pro{border-color:var(--accent);background:linear-gradient(180deg, rgba(205,92,43,.04), transparent 70%)}
+  .plan .banner{position:absolute;top:-11px;right:16px;background:var(--accent);color:#fff;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;border-radius:99px;padding:3px 10px;font-weight:600}
+  .plan .name{font-family:var(--serif);font-size:19px;font-weight:600}
+  .plan .price{font-size:30px;font-family:var(--serif);margin:8px 0 2px}
+  .plan .price small{font-size:13px;color:var(--muted);font-family:var(--sans)}
+  .plan ul{list-style:none;margin:16px 0 20px;font-size:13.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+  .plan li{padding:5px 0;display:flex;justify-content:space-between}
   .plan li b{color:var(--ink);font-weight:600}
+  .plan li .ck{color:var(--green);margin-right:8px}
+  .plan button{margin-top:auto}
 
-
-  .meter{margin:18px 0}
-  .meter .row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
+  /* ─ meters ─ */
+  .meter{margin:14px 0}
+  .meter .row{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-bottom:6px}
   .meter .row b{color:var(--ink)}
-  .bar{height:10px;background:var(--paper2);border-radius:99px;overflow:hidden}
-  .bar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .5s ease}
+  .bar{height:9px;background:var(--paper2);border-radius:99px;overflow:hidden}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-dark));border-radius:99px;transition:width .5s ease}
+  .bar i.crit{background:linear-gradient(90deg,var(--amber),var(--red))}
 
-  .controls{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
-  label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
-  select,input{background:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:14px;color:var(--ink);font-family:var(--sans)}
+  /* ─ controls ─ */
+  .controls{display:grid;grid-template-columns:1.4fr 1fr 1.6fr auto;gap:12px;align-items:end}
+  @media(max-width:760px){.controls{grid-template-columns:1fr 1fr;grid-template-rows:auto auto}}
+  label{font-size:11.5px;color:var(--muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em}
+  select,input{background:#fff;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:13.5px;color:var(--ink);font-family:var(--sans);width:100%}
   select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
-  .field{display:flex;flex-direction:column}
-  button{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:14px;cursor:pointer;font-weight:600;transition:background .15s}
-  button:hover{background:var(--accent-dark)}
-  button.secondary{background:transparent;color:var(--accent);border:1px solid var(--accent)}
-  button:disabled{opacity:.5;cursor:not-allowed}
+  .field{min-width:0}
+  button{background:var(--accent);color:#fff;border:none;border-radius:9px;padding:11px 18px;font-size:13.5px;cursor:pointer;font-weight:600;transition:all .15s;white-space:nowrap}
+  button:hover{background:var(--accent-dark);transform:translateY(-1px)}
+  button:active{transform:translateY(0)}
+  button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  button.secondary{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+  button.secondary:hover{border-color:var(--accent);color:var(--accent);background:var(--paper2)}
+  button.upgrade{width:100%;display:flex;align-items:center;justify-content:center;gap:8px}
 
-  #log{background:#1f1e1b;color:#e8e4da;font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:12.5px;border-radius:10px;padding:16px;margin-top:18px;max-height:260px;overflow:auto;white-space:pre-wrap}
+  /* ─ log ─ */
+  #log{background:#1c1b18;color:#e8e4da;font-family:var(--mono);font-size:12px;border-radius:11px;padding:16px;min-height:110px;max-height:280px;overflow:auto;white-space:pre-wrap;line-height:1.6}
   #log .ok{color:#6dcf7f}
   #log .dup{color:#e0c468}
-  #log .err{color:#e5856b}
+  #log .err{color:#ef9a83}
+  #log .api{color:#8ab4f8}
+  #log .sys{color:#a89a8a}
   .empty{color:#8a8679;font-style:italic}
 
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+  /* ─ webhook events ─ */
+  #events{list-style:none;font-size:12.5px}
+  #events li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)}
+  #events li:last-child{border-bottom:none}
+  #events .etype{font-family:var(--mono);font-size:11.5px;background:var(--paper2);border-radius:5px;padding:2px 7px;color:var(--ink)}
+  #events .etime{color:var(--muted);font-size:11px;margin-left:auto;white-space:nowrap}
+  #events .estatus{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0}
 
-  .note{font-size:13px;color:var(--muted);background:var(--paper2);border-radius:8px;padding:10px 14px;margin-top:14px}
+  .note{font-size:12.5px;color:var(--muted);background:var(--paper2);border-radius:10px;padding:13px 16px;margin-top:18px;border:1px solid var(--line)}
   .note b{color:var(--ink)}
+
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;font-size:13px;margin-top:8px}
+  .kv dt{color:var(--muted);font-weight:500}
+  .kv dd{font-family:var(--mono);font-size:12.5px;word-break:break-all}
+
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
 </style>
 </head>
 <body>
 <div class="wrap">
-
   <header>
     <div>
       <div class="brand">FlyRank &bull; <b>Billing Engine</b></div>
-      <h1>Usage &amp; Metering</h1>
+      <h1>Metering <span class="thin">&amp;</span> Billing Console</h1>
     </div>
-    <div class="status" id="status"><span class="dot"></span>checking API…</div>
+    <div class="status">
+      <span class="pill" id="statusp"><span class="dot"></span>connecting…</span>
+      <span class="pill" id="planpill">plan: —</span>
+    </div>
   </header>
 
-  <!-- Plans -->
-  <section>
-    <h2>Plans &amp; quotas</h2>
-    <p class="sub">Two plans, two usage types, one billable endpoint.</p>
-    <div class="plans" id="plans"><p class="empty">Loading plans…</p></div>
-  </section>
+  <!-- stat row -->
+  <div class="stats">
+    <div class="stat"><div class="lbl">Current plan</div><div class="val" id="s_plan">—</div></div>
+    <div class="stat"><div class="lbl">API calls used</div><div class="val" id="s_calls">0 <small>of 1k</small></div></div>
+    <div class="stat"><div class="lbl">Tokens used</div><div class="val" id="s_tok">0 <small>of 100k</small></div></div>
+    <div class="stat"><div class="lbl">Cost to date</div><div class="val" id="s_cost">$0.00</div><div class="hint">integer cents</div></div>
+  </div>
 
-  <!-- Usage -->
-  <section>
-    <h2>Current usage</h2>
-    <p class="sub">The meter reads <code>/api/v1/usage/{tenant}</code> — used vs monthly limit, and what it costs.</p>
-    <div id="usage"><p class="empty">No tenant measured yet. Hit <em>Simulate a call</em> below.</p></div>
-  </section>
+  <div class="grid cols">
+    <!-- Plans / upgrade -->
+    <section>
+      <h2>Plans <span class="tag">Stripe checkout</span></h2>
+      <p class="sub" id="planSub">Two tiers. Upgrading creates a real Stripe Checkout session — it appears instantly in your Stripe test dashboard.</p>
+      <div class="plans" id="plans"><p class="empty">Loading plans…</p></div>
+    </section>
+
+    <!-- Usage -->
+    <section>
+      <h2>Current usage <span class="tag" id="t_tenant">no tenant</span></h2>
+      <p class="sub">Live meter from <code>/api/v1/usage/{tenant}</code> — used vs monthly limit.</p>
+      <div id="usage"><p class="empty">No usage recorded yet.</p></div>
+    </section>
+  </div>
 
   <!-- Console -->
-  <section>
-    <h2>Billable console</h2>
-    <p class="sub">Drive <code>POST /api/v1/generate</code>. Keep the same idempotency key and watch a retry mirror the original — no double count.</p>
-
+  <section style="margin-top:22px">
+    <h2>Billable endpoint &nbsp;<code style="font-size:13px;color:var(--muted)">POST /api/v1/generate</code></h2>
+    <p class="sub">Drive a metered event. The same idempotency key sent twice returns the original — no double count (DB-enforced).</p>
     <div class="controls">
       <div class="field">
         <label>Usage type</label>
         <select id="type">
-          <option value="api_call">API call</option>
+          <option value="api_call">API call (&cent;0)</option>
           <option value="input_token">Input tokens</option>
           <option value="cached_input_token">Cached input (cheaper)</option>
           <option value="output_token">Output tokens</option>
-          <option value="reasoning_token">Reasoning tokens (= output)</option>
+          <option value="reasoning_token">Reasoning tokens (=output)</option>
         </select>
       </div>
       <div class="field">
         <label>Quantity</label>
         <input id="qty" type="number" value="5" min="1" />
       </div>
-      <div class="field" style="flex:1;min-width:200px">
+      <div class="field">
         <label>Idempotency key</label>
         <input id="key" type="text" value="demo-0001" placeholder="unique per request" />
       </div>
-      <button id="gen">Simulate a call</button>
-      <button id="retry" class="secondary">Retry same key</button>
+      <div class="actions">
+        <button id="gen">Simulate a call</button>
+        <button id="retry" class="secondary">Retry same key</button>
+      </div>
     </div>
-
     <div id="log"><span class="empty">Log will appear here.</span></div>
   </section>
 
-  <div class="note">
-    <b>Money is integer cents.</b> Cost is computed server-side from pinned pricing —
-    cached input is cheaper, reasoning counts as output. If a retry returns
-    <b>is_duplicate: true</b>, you sent the same idempotency key twice and the
-    engine refused to double-charge. <b>429</b> = quota hit. <b>402</b> = plan lapsed.
+  <!-- Stripe activity + events -->
+  <div class="grid cols" style="margin-top:22px">
+    <section>
+      <h2>Stripe activity <span class="tag">your dashboard</span></h2>
+      <p class="sub">Every checkout session you create lands in the Stripe test dashboard — see them <a href="https://dashboard.stripe.com/test/payments" target="_blank" style="color:var(--accent)">here</a>.</p>
+      <div class="kv" id="stripeinfo">
+        <dt>Last session</dt><dd id="d_session">—</dd>
+        <dt>Session URL</dt><dd id="d_url" style="font-size:11px">—</dd>
+        <dt>Status</dt><dd id="d_status">—</dd>
+      </div>
+      <div class="actions">
+        <button id="opencheckout" class="secondary" disabled>Open Checkout page</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Webhook events <span class="tag">via stripe listen</span></h2>
+      <p class="sub">Signed Stripe events forwarded to <code>/webhooks/stripe</code>, processed by the Celery worker.</p>
+      <ul id="events"><li class="empty">No events forwarded yet.</li></ul>
+    </section>
   </div>
 
+  <div class="note">
+    <b>Money is integer cents.</b> Cached input is cheaper than fresh input; reasoning counts as output.
+    A retry returning <b>is_duplicate:true</b> means you reused an idempotency key and the engine refused to
+    double-charge. <b>429</b> = quota hit. <b>402</b> = plan lapsed. The "Upgrade to Pro" button creates a
+    real Stripe Checkout session in test mode — complete it with card <b>4242 4242 4242 4242</b> and watch
+    the tenant flip Free &rarr; Pro via the webhook.
+  </div>
 </div>
 
 <script>
 const API = "http://localhost:8000";
-const KEY = "demo-0001";
-let tenantId = null;
-
 const $ = id => document.getElementById(id);
-const status = $("status");
+let tenantId = null, proPlanId = null, lastSessionUrl = null;
 
 async function json(path, opts){
   const r = await fetch(API+path, opts);
   const body = r.status===204?{}:await r.json().catch(()=>({}));
   return {status:r.status, body};
 }
+function fmt(n){ return n>=1000? (n/1000).toFixed(1).replace(/\.0$/,'')+"k" : n; }
+function cs(c){ return "$"+(c/100).toFixed(2); }
 
-function log(type, text){
-  const el = $("log");
-  const line = document.createElement("div");
-  line.className = type;
-  line.textContent = text;
+function ts(){
+  const d=new Date();
+  return d.toTimeString().slice(0,8);
+}
+function log(kind, text){
+  const el=$("log");
+  const line=document.createElement("div");
+  line.className=kind;
+  line.textContent=`[${ts()}] ${text}`;
   el.appendChild(line);
-  el.scrollTop = el.scrollHeight;
+  el.scrollTop=el.scrollHeight;
+  if($("log").querySelector(".empty")) $("log").innerHTML="";
+}
+function addEvent(etype){
+  const ul=$("events");
+  const it=document.createElement("li");
+  it.innerHTML=`<span class="estatus"></span><span class="etype">${etype}</span><span class="etime">${ts()}</span>`;
+  ul.prepend(it);
+  if(ul.querySelector(".empty")) ul.innerHTML="";
 }
 
 async function init(){
-  // health check
   try{
-    const h = await json("/health");
-    status.className = "status on";
-    $("status").innerHTML = '<span class="dot"></span>API live @ '+API;
-    log("ok", "[api] connected — "+API);
+    const h=await json("/health");
+    $("statusp").className="pill on";
+    $("statusp").innerHTML='<span class="dot"></span>API live &nbsp;<span class="code">'+API+'</span>';
+    log("ok","[api] connected — "+API);
   }catch(e){
-    $("status").innerHTML = '<span class="dot"></span>API offline — start uvicorn';
-    status.innerHTML = '<span class="dot"></span>API offline — start uvicorn';
-    log("err", "[api] could not reach "+API+" — is `uvicorn app.main:app` running?");
+    $("statusp").innerHTML='<span class="dot"></span>API offline — start uvicorn';
+    log("err","[api] could not reach "+API);
     return;
   }
-
-  // plans
-  const p = await json("/api/v1/plans");
-  if(p.status!==200){ log("err","[plans] "+p.status); return; }
+  const p=await json("/api/v1/plans");
+  if(p.status!==200){log("err","[plans] "+p.status);return;}
   renderPlans(p.body);
-
-  // resolve a tenant to measure
   await resolveTenant();
 }
 
 function renderPlans(plans){
-  $("plans").innerHTML = "";
+  $("plans").innerHTML="";
   plans.forEach(pl=>{
-    const d = document.createElement("div");
-    d.className = "plan"+(pl.name==="pro"?" pro":"");
-    d.innerHTML = `
-      <div class="name">${pl.name}</div>
-      <div class="price">$${(pl.price_per_month_cents/100).toFixed(2)}<small>/mo</small></div>
+    const isPro=pl.name==="pro";
+    if(isPro) proPlanId=pl.id;
+    const d=document.createElement("div");
+    d.className="plan"+(isPro?" pro":"");
+    d.innerHTML=`
+      ${isPro?'<span class="banner">Stripe checkout</span>':''}
+      <div class="name" style="text-transform:capitalize">${pl.name}</div>
+      <div class="price">${cs(pl.price_per_month_cents)}<small>/mo</small></div>
       <ul>
-        <li>API calls <b>${fmt(pl.api_calls_limit)}/mo</b></li>
-        <li>AI tokens <b>${fmt(pl.api_tokens_limit)}/mo</b></li>
-      </ul>`;
+        <li><span><span class="ck">✓</span>API calls</span><b>${fmt(pl.api_calls_limit)}/mo</b></li>
+        <li><span><span class="ck">✓</span>AI tokens</span><b>${fmt(pl.api_tokens_limit)}/mo</b></li>
+      </ul>
+      ${isPro?`<button class="upgrade" onclick="upgrade()">↑ Upgrade to Pro &nbsp;<span style="font-size:11px;opacity:.8">Stripe</span></button>`
+            :`<button class="secondary upgrade" disabled>Current plan</button>`}`;
     $("plans").appendChild(d);
   });
 }
 
-function fmt(n){ return n>=1000? (n/1000).toFixed(0)+"k" : n; }
-
 async function resolveTenant(){
-  // find demo tenant by creating/reading: simplest path is reusing the seeded demo.
-  // We list tenants by trying the known demo email indirectly isn't exposed, so we
-  // create with a fixed email if absent.
-  const r = await json("/api/v1/tenants", {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({name:"Demo Tenant", email:"demo@flyrank.dev"})
+  // re-use the seeded demo tenant if present, else create one
+  const r=await json("/api/v1/tenants",{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({name:"Demo Tenant",email:"demo@flyrank.dev"})
   });
-  if(r.status!==201 && r.status!==200){ log("err","[tenant] "+r.status+" "+JSON.stringify(r.body)); }
-  tenantId = r.body?.id || null;
-  if(tenantId) await refreshUsage();
+  if(r.body?.id){ tenantId=r.body.id; refreshUsage(); }
+  else log("err","[tenant] "+r.status);
 }
 
 async function refreshUsage(){
   if(!tenantId) return;
-  const u = await json("/api/v1/usage/"+tenantId);
-  if(u.status!==200){ log("err","[usage] "+u.status); return; }
+  const u=await json("/api/v1/usage/"+tenantId);
+  if(u.status!==200){log("err","[usage] "+u.status);return;}
   renderUsage(u.body);
 }
 
 function renderUsage(u){
-  $("usage").innerHTML = "";
-  const apiPct = Math.min(100, u.api_calls_used/u.api_calls_limit*100);
-  const tokPct = Math.min(100, u.tokens_used/u.tokens_limit*100);
-  const el = document.createElement("div");
-  el.innerHTML = `
+  const apiPct=Math.min(100,u.api_calls_used/u.api_calls_limit*100);
+  const tokPct=Math.min(100,u.tokens_used/u.tokens_limit*100);
+  $("t_tenant").textContent=u.plan_status;
+  $("planpill").textContent="plan: "+u.plan_status;
+  $("s_plan").textContent=u.plan_status;
+  $("s_calls").innerHTML=fmt(u.api_calls_used)+` <small>of ${fmt(u.api_calls_limit)}</small>`;
+  $("s_tok").innerHTML=fmt(u.tokens_used)+` <small>of ${fmt(u.tokens_limit)}</small>`;
+  $("s_cost").textContent=cs(u.total_cost_cents);
+
+  $("usage").innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:baseline">
-      <span style="color:var(--muted);font-size:13px">Plan · <b style="color:var(--ink)">${u.plan_status}</b></span>
-      <span style="font-size:13px;color:var(--muted)">cost to date: <b style="color:var(--ink)">¢${u.total_cost_cents}</b></span>
+      <span style="color:var(--muted);font-size:12.5px">Cost to date: <b style="color:var(--ink)">${cs(u.total_cost_cents)}</b> · cents</span>
+      <span style="font-size:12.5px;color:var(--muted);font-family:var(--mono)">tenant ${String(u.tenant_id).slice(0,8)}…</span>
     </div>
     <div class="meter">
-      <div class="row"><span>API calls</span><b>${u.api_calls_used} / ${fmt(u.api_calls_limit)}</b></div>
-      <div class="bar"><i style="width:${apiPct}%"></i></div>
+      <div class="row"><span>API calls</span><b>${fmt(u.api_calls_used)} / ${fmt(u.api_calls_limit)}</b></div>
+      <div class="bar"><i class="${apiPct>90?'crit':''}" style="width:${apiPct}%"></i></div>
     </div>
     <div class="meter">
       <div class="row"><span>AI tokens</span><b>${fmt(u.tokens_used)} / ${fmt(u.tokens_limit)}</b></div>
-      <div class="bar"><i style="width:${tokPct}%"></i></div>
+      <div class="bar"><i class="${tokPct>90?'crit':''}" style="width:${tokPct}%"></i></div>
     </div>`;
-  $("usage").appendChild(el);
 }
 
+async function upgrade(){
+  if(!tenantId||!proPlanId){log("err","[stripe] missing tenant/plan");return;}
+  log("api",`→ POST /api/v1/checkout {tenant, plan:pro}`);
+  const btn=document.querySelector("button.upgrade");
+  btn.disabled=true;btn.textContent="Creating session…";
+  try{
+    const r=await json("/api/v1/checkout",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({tenant_id:tenantId,plan_id:proPlanId})
+    });
+    if(r.status===200){
+      lastSessionUrl=r.body.url;
+      $("d_session").textContent=r.body.session_id;
+      $("d_url").textContent=r.body.url;
+      $("d_url").title=r.body.url;
+      $("d_status").textContent="open — waiting for payment";
+      $("opencheckout").disabled=false;
+      log("ok","[stripe] session created: "+r.body.session_id);
+      log("sys",`→ checkout URL: ${r.body.url}`);
+      addEvent("checkout.session.created");
+    } else {
+      log("err","[stripe] "+r.status+" "+(r.body?.detail||JSON.stringify(r.body)));
+    }
+  }finally{
+    btn.disabled=false;btn.innerHTML="↑ Upgrade to Pro &nbsp;<span style=\"font-size:11px;opacity:.8\">Stripe</span>";
+  }
+}
+
+$("opencheckout").addEventListener("click",()=>{ if(lastSessionUrl) window.open(lastSessionUrl,"_blank"); });
+
 async function simulate(isRetry){
-  const type = $("type").value;
-  const qty  = parseInt($("qty").value,10)||1;
-  const key  = isRetry ? KEY : ($("key").value.trim()||KEY);
-
-  log("", `→ generate {event_type:${type}, quantity:${qty}, key:"${key}"}`);
-
-  const r = await json("/api/v1/generate", {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({event_type:type, quantity:qty, idempotency_key:key})
+  const type=$("type").value;
+  const qty=parseInt($("qty").value,10)||1;
+  const key=isRetry?"demo-0001":($("key").value.trim()||"demo-0001");
+  log("api",`→ generate {event_type:${type}, quantity:${qty}, key:"${key}"}`);
+  const r=await json("/api/v1/generate",{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({event_type:type,quantity:qty,idempotency_key:key})
   });
-
   if(r.status===201){
-    const d = r.body;
-    const tag = d.is_duplicate ? "dup" : "ok";
-    const label = d.is_duplicate ? "DUPLICATE — returned original, no double charge" : "recorded";
-    log(tag, `  [201] ${label} · qty=${d.quantity} · cost=¢${d.cost_cents} · id=${d.event_id.slice(0,8)}…`);
+    const d=r.body;
+    const tag=d.is_duplicate?"dup":"ok";
+    const label=d.is_duplicate?"DUPLICATE — returned original, no double charge":"recorded";
+    log(tag,`  [201] ${label} · cost=${cs(d.cost_cents)} · qty=${d.quantity}`);
   } else {
-    const detail = typeof r.body?.detail==="string" ? r.body.detail : JSON.stringify(r.body);
-    log("err", `  [${r.status}] ${detail}`);
+    const detail=typeof r.body?.detail==="string"?r.body.detail:JSON.stringify(r.body);
+    log("err",`  [${r.status}] ${detail}`);
   }
   await refreshUsage();
 }
 
-$("gen").addEventListener("click", ()=>simulate(false));
-$("retry").addEventListener("click", ()=>simulate(true));
-
+$("gen").addEventListener("click",()=>simulate(false));
+$("retry").addEventListener("click",()=>simulate(true));
 init();
 </script>
 </body>

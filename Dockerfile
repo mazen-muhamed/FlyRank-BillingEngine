@@ -14,5 +14,4 @@ COPY . .
 
 EXPOSE 8000
 
-# Runs the FastAPI app. The Celery worker + Redis run separately (see README).
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

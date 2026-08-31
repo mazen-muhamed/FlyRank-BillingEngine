@@ -17,6 +17,6 @@ async def stripe_webhook(request: Request, db=Depends(get_db)):
     process_stripe_event.delay(
         event_id=event.get("id"),
         event_type=event.get("type"),
-        payload=event.get("data", {}),
+        payload=event,  # full event — service reads payload["data"]["object"]
     )
     return {"status": "ok", "enqueued": event.get("id")}
