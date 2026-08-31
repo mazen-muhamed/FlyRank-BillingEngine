@@ -11,7 +11,8 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
     STRIPE_PRICE_FREE_ID: str = ""
-    STRIPE_PRICE_PRO_ID: str = ""
+    STRIPE_PRICE_PRO_ID: str = ""  # .env uses STRIPE_PRICE_ID_PRO; pydantic aliases below
+    STRIPE_PRICE_ID_PRO: str = ""  # compatibility with existing .env key
     # Celery broker/backend — single Redis instance
     REDIS_URL: str = "redis://localhost:6379/0"
     BASE_URL: str = "http://localhost:8000"

@@ -33,10 +33,16 @@ async def create_checkout_session(db: AsyncSession, body) -> dict:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Plan not found")
 
     stripe.api_key = settings.STRIPE_SECRET_KEY
+    # Prefer the real Stripe price from config over the DB placeholder (seed uses
+    # "price_pro_tier" which is not a live Stripe Price ID — sending it 400s).
+    configured_price = (
+        settings.STRIPE_PRICE_ID_PRO or settings.STRIPE_PRICE_PRO_ID or settings.STRIPE_PRICE_FREE_ID
+    )
+    live_price = configured_price or plan.stripe_price_id or "price_test"
     try:
         session = stripe.checkout.Session.create(
             payment_method_types=["card"],
-            line_items=[{"price": plan.stripe_price_id or "price_test", "quantity": 1}],
+            line_items=[{"price": live_price or "price_test", "quantity": 1}],
             mode="subscription",
             success_url=f"{settings.BASE_URL}/checkout/success?session_id={{CHECKOUT_SESSION_ID}}",
             cancel_url=f"{settings.BASE_URL}/checkout/cancel",

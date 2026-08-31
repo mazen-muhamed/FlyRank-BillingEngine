@@ -3,7 +3,6 @@ from sqlalchemy import select, func, case
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import Tenant, Plan, UsageEvent, MonthlyRollup, Subscription, PaymentRecord
 
-
 async def get_tenant_by_id(db: AsyncSession, tenant_id: uuid.UUID) -> Tenant | None:
     result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
     return result.scalar_one_or_none()
@@ -40,13 +39,14 @@ async def list_active_plans(db: AsyncSession) -> list[Plan]:
     return list(result.scalars().all())
 
 
-# Usage events 
-async def get_usage_by_key(db: AsyncSession, tenant_id: uuid.UUID, key: str, event_type: str) -> UsageEvent | None:
+#  Usage events 
+# Idempotency key is unique per tenant regardless of event_type (see UNIQUE(tenant_id, idempotency_key) on the model).
+# A retry of a key — same type OR different — must return the original event, never double-count.
+async def get_usage_by_key(db: AsyncSession, tenant_id: uuid.UUID, key: str) -> UsageEvent | None:
     result = await db.execute(
         select(UsageEvent).where(
             UsageEvent.tenant_id == tenant_id,
             UsageEvent.idempotency_key == key,
-            UsageEvent.event_type == event_type,
         )
     )
     return result.scalar_one_or_none()
@@ -90,7 +90,7 @@ async def api_and_token_totals(db: AsyncSession, tenant_id: uuid.UUID, period: s
         select(func.coalesce(
             func.sum(case(
                 (UsageEvent.event_type.in_(["input_token", "cached_input_token", "output_token", "reasoning_token"]),
-                UsageEvent.quantity),
+                 UsageEvent.quantity),
                 else_=0
             )), 0
         )).where(
@@ -101,7 +101,7 @@ async def api_and_token_totals(db: AsyncSession, tenant_id: uuid.UUID, period: s
     return api.scalar_one() or 0, tok.scalar_one() or 0
 
 
-# Monthly rollups 
+#  Monthly rollups 
 async def get_rollup(db: AsyncSession, tenant_id: uuid.UUID, period: str) -> MonthlyRollup | None:
     result = await db.execute(
         select(MonthlyRollup).where(

@@ -1,3 +1,7 @@
 .env
 __pycache__/
 pyproject.toml
+.venv/
+*.py[cod]
+.pytest_cache/
+

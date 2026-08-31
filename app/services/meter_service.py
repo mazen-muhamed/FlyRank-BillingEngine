@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import Tenant
 from app.schemas import GenerateResponse
@@ -18,8 +19,9 @@ async def record_usage(
     if not tenant:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Tenant not found")
 
-    # Idempotency fast-path: a retry with the same key returns the original event.
-    existing = await repo.get_usage_by_key(db, tenant_id, idempotency_key, event_type)
+    # Idempotency fast-path: a retry with the same key returns the original event
+    # (matches UNIQUE(tenant_id, idempotency_key) — any same-key request is a retry).
+    existing = await repo.get_usage_by_key(db, tenant_id, idempotency_key)
     if existing:
         return _response(existing, tenant_id, event_type, is_dup=True)
 
@@ -30,7 +32,16 @@ async def record_usage(
 
     from app.billing import tokens_to_cents
     cost = tokens_to_cents(quantity, event_type)
-    event = await repo.insert_usage(db, tenant_id, event_type, quantity, cost, idempotency_key)
+    try:
+        event = await repo.insert_usage(db, tenant_id, event_type, quantity, cost, idempotency_key)
+    except IntegrityError:
+        # Two racing retries both passed the check — the UNIQUE constraint wins.
+        # Return the original, never a 500 and never a double-count.
+        await db.rollback()
+        existing = await repo.get_usage_by_key(db, tenant_id, idempotency_key)
+        if existing:
+            return _response(existing, tenant_id, event_type, is_dup=True)
+        raise
 
     await _bump_rollup(db, tenant, event_type, quantity)
     await db.commit()

@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
@@ -13,8 +13,14 @@ from app.routers import generate, usage, webhooks, checkout, tenants, plans
 app = FastAPI(title="FlyRank Metering & Billing Engine", version="1.0.0")
 
 
-# Serve the admin console at /static 
-app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
+# Serve the admin console at /static
+_STATIC_DIR = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
+
+
+@app.get("/", include_in_schema=False)
+async def index():
+    return FileResponse(_STATIC_DIR / "index.html")
 
 
 @app.on_event("startup")
