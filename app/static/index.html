@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FlyRank — Metering & Billing</title>
+<style>
+  :root{
+    --paper:#f4f1ea;       
+    --paper2:#ece8de;
+    --ink:#20201e;        
+    --muted:#7a7568;     
+    --accent:#cd5c2b;    
+    --accent-dark:#a84520;
+    --card:#fbfaf6;
+    --line:#e2dccd;
+    --serif:Georgia,'Times New Roman',serif;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    --radius:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.55;padding:48px 24px 80px;}
+  .wrap{max-width:980px;margin:0 auto}
+
+  /* header */
+  header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:36px}
+  .brand{font-family:var(--serif);font-size:14px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+  .brand b{color:var(--ink);font-weight:600}
+  h1{font-family:var(--serif);font-weight:500;font-size:clamp(28px,5vw,42px);margin-top:6px}
+  .status{font-size:13px;color:var(--muted);text-align:right}
+  .status .dot{width:8px;height:8px;border-radius:50%;background:#9a9a90;display:inline-block;margin-right:6px}
+  .status.on .dot{background:#4a9d62}
+
+  section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px;margin-bottom:24px}
+  h2{font-family:var(--serif);font-weight:500;font-size:20px;margin-bottom:4px}
+  .sub{color:var(--muted);font-size:14px;margin-bottom:18px}
+
+  .plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+  .plan{border:1px solid var(--line);border-radius:10px;padding:20px}
+  .plan.pro{border-color:var(--accent)}
+  .plan .name{font-family:var(--serif);font-size:18px;font-weight:600}
+  .plan .price{font-size:24px;font-family:var(--serif);margin:6px 0 2px}
+  .plan .price small{font-size:13px;color:var(--muted)}
+  .plan ul{list-style:none;margin-top:12px;font-size:14px;color:var(--muted)}
+  .plan li{padding:4px 0;display:flex;justify-content:space-between}
+  .plan li b{color:var(--ink);font-weight:600}
+
+
+  .meter{margin:18px 0}
+  .meter .row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
+  .meter .row b{color:var(--ink)}
+  .bar{height:10px;background:var(--paper2);border-radius:99px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .5s ease}
+
+  .controls{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+  label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
+  select,input{background:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:14px;color:var(--ink);font-family:var(--sans)}
+  select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+  .field{display:flex;flex-direction:column}
+  button{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:14px;cursor:pointer;font-weight:600;transition:background .15s}
+  button:hover{background:var(--accent-dark)}
+  button.secondary{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+
+  #log{background:#1f1e1b;color:#e8e4da;font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:12.5px;border-radius:10px;padding:16px;margin-top:18px;max-height:260px;overflow:auto;white-space:pre-wrap}
+  #log .ok{color:#6dcf7f}
+  #log .dup{color:#e0c468}
+  #log .err{color:#e5856b}
+  .empty{color:#8a8679;font-style:italic}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+
+  .note{font-size:13px;color:var(--muted);background:var(--paper2);border-radius:8px;padding:10px 14px;margin-top:14px}
+  .note b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="brand">FlyRank &bull; <b>Billing Engine</b></div>
+      <h1>Usage &amp; Metering</h1>
+    </div>
+    <div class="status" id="status"><span class="dot"></span>checking API…</div>
+  </header>
+
+  <!-- Plans -->
+  <section>
+    <h2>Plans &amp; quotas</h2>
+    <p class="sub">Two plans, two usage types, one billable endpoint.</p>
+    <div class="plans" id="plans"><p class="empty">Loading plans…</p></div>
+  </section>
+
+  <!-- Usage -->
+  <section>
+    <h2>Current usage</h2>
+    <p class="sub">The meter reads <code>/api/v1/usage/{tenant}</code> — used vs monthly limit, and what it costs.</p>
+    <div id="usage"><p class="empty">No tenant measured yet. Hit <em>Simulate a call</em> below.</p></div>
+  </section>
+
+  <!-- Console -->
+  <section>
+    <h2>Billable console</h2>
+    <p class="sub">Drive <code>POST /api/v1/generate</code>. Keep the same idempotency key and watch a retry mirror the original — no double count.</p>
+
+    <div class="controls">
+      <div class="field">
+        <label>Usage type</label>
+        <select id="type">
+          <option value="api_call">API call</option>
+          <option value="input_token">Input tokens</option>
+          <option value="cached_input_token">Cached input (cheaper)</option>
+          <option value="output_token">Output tokens</option>
+          <option value="reasoning_token">Reasoning tokens (= output)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Quantity</label>
+        <input id="qty" type="number" value="5" min="1" />
+      </div>
+      <div class="field" style="flex:1;min-width:200px">
+        <label>Idempotency key</label>
+        <input id="key" type="text" value="demo-0001" placeholder="unique per request" />
+      </div>
+      <button id="gen">Simulate a call</button>
+      <button id="retry" class="secondary">Retry same key</button>
+    </div>
+
+    <div id="log"><span class="empty">Log will appear here.</span></div>
+  </section>
+
+  <div class="note">
+    <b>Money is integer cents.</b> Cost is computed server-side from pinned pricing —
+    cached input is cheaper, reasoning counts as output. If a retry returns
+    <b>is_duplicate: true</b>, you sent the same idempotency key twice and the
+    engine refused to double-charge. <b>429</b> = quota hit. <b>402</b> = plan lapsed.
+  </div>
+
+</div>
+
+<script>
+const API = "http://localhost:8000";
+const KEY = "demo-0001";
+let tenantId = null;
+
+const $ = id => document.getElementById(id);
+const status = $("status");
+
+async function json(path, opts){
+  const r = await fetch(API+path, opts);
+  const body = r.status===204?{}:await r.json().catch(()=>({}));
+  return {status:r.status, body};
+}
+
+function log(type, text){
+  const el = $("log");
+  const line = document.createElement("div");
+  line.className = type;
+  line.textContent = text;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+async function init(){
+  // health check
+  try{
+    const h = await json("/health");
+    status.className = "status on";
+    $("status").innerHTML = '<span class="dot"></span>API live @ '+API;
+    log("ok", "[api] connected — "+API);
+  }catch(e){
+    $("status").innerHTML = '<span class="dot"></span>API offline — start uvicorn';
+    status.innerHTML = '<span class="dot"></span>API offline — start uvicorn';
+    log("err", "[api] could not reach "+API+" — is `uvicorn app.main:app` running?");
+    return;
+  }
+
+  // plans
+  const p = await json("/api/v1/plans");
+  if(p.status!==200){ log("err","[plans] "+p.status); return; }
+  renderPlans(p.body);
+
+  // resolve a tenant to measure
+  await resolveTenant();
+}
+
+function renderPlans(plans){
+  $("plans").innerHTML = "";
+  plans.forEach(pl=>{
+    const d = document.createElement("div");
+    d.className = "plan"+(pl.name==="pro"?" pro":"");
+    d.innerHTML = `
+      <div class="name">${pl.name}</div>
+      <div class="price">$${(pl.price_per_month_cents/100).toFixed(2)}<small>/mo</small></div>
+      <ul>
+        <li>API calls <b>${fmt(pl.api_calls_limit)}/mo</b></li>
+        <li>AI tokens <b>${fmt(pl.api_tokens_limit)}/mo</b></li>
+      </ul>`;
+    $("plans").appendChild(d);
+  });
+}
+
+function fmt(n){ return n>=1000? (n/1000).toFixed(0)+"k" : n; }
+
+async function resolveTenant(){
+  // find demo tenant by creating/reading: simplest path is reusing the seeded demo.
+  // We list tenants by trying the known demo email indirectly isn't exposed, so we
+  // create with a fixed email if absent.
+  const r = await json("/api/v1/tenants", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({name:"Demo Tenant", email:"demo@flyrank.dev"})
+  });
+  if(r.status!==201 && r.status!==200){ log("err","[tenant] "+r.status+" "+JSON.stringify(r.body)); }
+  tenantId = r.body?.id || null;
+  if(tenantId) await refreshUsage();
+}
+
+async function refreshUsage(){
+  if(!tenantId) return;
+  const u = await json("/api/v1/usage/"+tenantId);
+  if(u.status!==200){ log("err","[usage] "+u.status); return; }
+  renderUsage(u.body);
+}
+
+function renderUsage(u){
+  $("usage").innerHTML = "";
+  const apiPct = Math.min(100, u.api_calls_used/u.api_calls_limit*100);
+  const tokPct = Math.min(100, u.tokens_used/u.tokens_limit*100);
+  const el = document.createElement("div");
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <span style="color:var(--muted);font-size:13px">Plan · <b style="color:var(--ink)">${u.plan_status}</b></span>
+      <span style="font-size:13px;color:var(--muted)">cost to date: <b style="color:var(--ink)">¢${u.total_cost_cents}</b></span>
+    </div>
+    <div class="meter">
+      <div class="row"><span>API calls</span><b>${u.api_calls_used} / ${fmt(u.api_calls_limit)}</b></div>
+      <div class="bar"><i style="width:${apiPct}%"></i></div>
+    </div>
+    <div class="meter">
+      <div class="row"><span>AI tokens</span><b>${fmt(u.tokens_used)} / ${fmt(u.tokens_limit)}</b></div>
+      <div class="bar"><i style="width:${tokPct}%"></i></div>
+    </div>`;
+  $("usage").appendChild(el);
+}
+
+async function simulate(isRetry){
+  const type = $("type").value;
+  const qty  = parseInt($("qty").value,10)||1;
+  const key  = isRetry ? KEY : ($("key").value.trim()||KEY);
+
+  log("", `→ generate {event_type:${type}, quantity:${qty}, key:"${key}"}`);
+
+  const r = await json("/api/v1/generate", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({event_type:type, quantity:qty, idempotency_key:key})
+  });
+
+  if(r.status===201){
+    const d = r.body;
+    const tag = d.is_duplicate ? "dup" : "ok";
+    const label = d.is_duplicate ? "DUPLICATE — returned original, no double charge" : "recorded";
+    log(tag, `  [201] ${label} · qty=${d.quantity} · cost=¢${d.cost_cents} · id=${d.event_id.slice(0,8)}…`);
+  } else {
+    const detail = typeof r.body?.detail==="string" ? r.body.detail : JSON.stringify(r.body);
+    log("err", `  [${r.status}] ${detail}`);
+  }
+  await refreshUsage();
+}
+
+$("gen").addEventListener("click", ()=>simulate(false));
+$("retry").addEventListener("click", ()=>simulate(true));
+
+init();
+</script>
+</body>
+</html>
