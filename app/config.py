@@ -7,11 +7,13 @@ load_dotenv()
 class Settings(BaseSettings):
     APP_NAME: str = "flyrank-capstone-metering-billing"
     DEBUG: bool = False
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/metering"
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/billing"
     STRIPE_SECRET_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
     STRIPE_PRICE_FREE_ID: str = ""
     STRIPE_PRICE_PRO_ID: str = ""
+    # Celery broker/backend — single Redis instance
+    REDIS_URL: str = "redis://localhost:6379/0"
     BASE_URL: str = "http://localhost:8000"
     PORT: int = 8000
 

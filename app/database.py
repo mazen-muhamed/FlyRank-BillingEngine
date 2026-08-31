@@ -1,14 +1,18 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from app.config import settings
+from app.models import Base
 
-# native Postgres; brief says native install, not Docker
-engine = create_engine("postgresql://user:pass@localhost/billing")
-SessionLocal = sessionmaker(bind=engine)
+engine = create_async_engine(settings.DATABASE_URL, echo=settings.DEBUG)
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+
+async def init_db():
+    """Create tables for local dev (Alembic is the source of truth for prod)."""
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+
+async def get_db():
+    async with async_session() as session:
+        yield session

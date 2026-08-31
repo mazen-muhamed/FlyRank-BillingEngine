@@ -38,7 +38,7 @@ async def seed(db: AsyncSession) -> None:
         await db.flush()
 
     await db.commit()
-    print("✅ Seed complete: Free plan, Pro plan, Demo tenant")
+    print("Seed complete: Free plan, Pro plan, Demo tenant")
 
 
 async def _get_or_create(db, name, api_calls, api_tokens, price, stripe_price_id):
